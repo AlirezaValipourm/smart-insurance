@@ -2,7 +2,7 @@
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { Roboto } from 'next/font/google';
 import ThemeProvider from "@/smart-insurance/config/mui";
-import { SettingsProvider } from "@/smart-insurance/contexts/SettingsContext";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -35,11 +35,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={roboto.className}>
         <AppRouterCacheProvider>
-          <SettingsProvider>
+          <Providers>
             <ThemeProvider>
               {children}
             </ThemeProvider>
-          </SettingsProvider>
+          </Providers>
         </AppRouterCacheProvider>
       </body>
     </html>
