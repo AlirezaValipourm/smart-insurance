@@ -15,6 +15,7 @@ import {
   InputLabel, InputAdornment, OutlinedInput, Pagination, Skeleton,
   ToggleButton, ToggleButtonGroup, ButtonGroup, Stack, Menu,
   Fade, Grow, Slide, Collapse,
+  Grid2,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -476,8 +477,11 @@ export default function DesignSystem() {
           {/* Cards */}
           <Stack spacing={2}>
             <Typography variant="subtitle1">Cards</Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
+            <Grid2 container spacing={2}>
+              <Grid2 size={{
+                xs: 12,
+                md: 4
+              }}>
                 <Card>
                   <CardHeader
                     avatar={<Avatar>R</Avatar>}
@@ -505,8 +509,8 @@ export default function DesignSystem() {
                     <Button size="small">Learn More</Button>
                   </CardActions>
                 </Card>
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
           </Stack>
 
           {/* Lists */}
@@ -717,17 +721,26 @@ export default function DesignSystem() {
           {/* Paper */}
           <Stack spacing={2}>
             <Typography variant="subtitle1">Paper</Typography>
-            <Grid container spacing={2}>
-              <Grid item>
+            <Grid2 container spacing={2}>
+              <Grid2 size={{
+                xs:12,
+                md:4
+              }}>
                 <Paper elevation={0} sx={{ p: 2 }}>Elevation 0</Paper>
-              </Grid>
-              <Grid item>
+              </Grid2>
+              <Grid2 size={{
+                xs:12,
+                md:4
+              }}>
                 <Paper elevation={1} sx={{ p: 2 }}>Elevation 1</Paper>
-              </Grid>
-              <Grid item>
+              </Grid2>
+              <Grid2 size={{
+                xs:12,
+                md:4
+              }}>
                 <Paper elevation={3} sx={{ p: 2 }}>Elevation 3</Paper>
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
           </Stack>
 
           {/* Accordion */}

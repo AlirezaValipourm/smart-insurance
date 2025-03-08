@@ -1,21 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Container, 
-  Box, 
-  Typography, 
-  Tabs, 
-  Tab, 
-  Paper, 
+import {
+  Container,
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  Paper,
   Button,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  CircularProgress,
+  Alert,
+  Card,
+  CardContent,
+  CardActionArea
 } from '@mui/material';
 import DynamicForm from '../components/forms/DynamicForm';
 import SubmissionsList from '../components/submissions/SubmissionsList';
 import { useDispatch } from 'react-redux';
-import { setCurrentInsuranceType } from '../store/slices/formSlice';
+import { useFormData } from '../hooks/useFormData';
 
 /**
  * Main page component
@@ -23,40 +28,36 @@ import { setCurrentInsuranceType } from '../store/slices/formSlice';
  */
 export default function Home() {
   const [tabIndex, setTabIndex] = useState(0);
-  const [insuranceType, setInsuranceType] = useState<string | null>(null);
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const dispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
+
+  // Get forms data
+  const { forms, isLoading, error } = useFormData();
+
   // Handle tab change
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
+    // Reset selected form when changing tabs
+    setSelectedFormId(null);
   };
-  
-  // Handle insurance type selection
-  const handleInsuranceTypeSelect = (type: string) => {
-    setInsuranceType(type);
-    dispatch(setCurrentInsuranceType(type));
+
+  // Handle form selection
+  const handleFormSelect = (formId: string) => {
+    setSelectedFormId(formId);
   };
-  
-  // Insurance types
-  const insuranceTypes = [
-    { id: 'health', label: 'Health Insurance' },
-    { id: 'car', label: 'Car Insurance' },
-    { id: 'home', label: 'Home Insurance' },
-    { id: 'life', label: 'Life Insurance' },
-  ];
-  
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h3" component="h1" gutterBottom align="center">
         Smart Insurance Portal
       </Typography>
-      
+
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-        <Tabs 
-          value={tabIndex} 
-          onChange={handleTabChange} 
+        <Tabs
+          value={tabIndex}
+          onChange={handleTabChange}
           variant={isMobile ? 'scrollable' : 'fullWidth'}
           scrollButtons={isMobile ? 'auto' : undefined}
         >
@@ -64,40 +65,43 @@ export default function Home() {
           <Tab label="My Applications" />
         </Tabs>
       </Box>
-      
+
       {tabIndex === 0 && (
         <Box>
-          {!insuranceType ? (
+          {isLoading ? (
+            <Box display="flex" justifyContent="center" my={4}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ my: 2 }}>
+              Error loading insurance forms: {error instanceof Error ? error.message : 'Unknown error'}
+            </Alert>
+          ) : !selectedFormId ? (
             <Box>
               <Typography variant="h5" gutterBottom>
                 Select Insurance Type
               </Typography>
-              <Box 
-                sx={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' },
                   gap: 2,
                   mt: 3
                 }}
               >
-                {insuranceTypes.map((type) => (
-                  <Paper
-                    key={type.id}
-                    elevation={3}
-                    sx={{
-                      p: 3,
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        transform: 'translateY(-5px)',
-                        boxShadow: 6,
-                      },
-                    }}
-                    onClick={() => handleInsuranceTypeSelect(type.id)}
-                  >
-                    <Typography variant="h6">{type.label}</Typography>
-                  </Paper>
+                {forms?.map((form) => (
+                  <Card key={form.formId} elevation={3}>
+                    <CardActionArea onClick={() => handleFormSelect(form.formId)}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          {form.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Click to apply for {form.title.toLowerCase()}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
                 ))}
               </Box>
             </Box>
@@ -105,21 +109,21 @@ export default function Home() {
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h5">
-                  {insuranceTypes.find(type => type.id === insuranceType)?.label}
+                  {forms?.find(form => form.formId === selectedFormId)?.title}
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  onClick={() => setInsuranceType(null)}
+                <Button
+                  variant="outlined"
+                  onClick={() => setSelectedFormId(null)}
                 >
                   Change Type
                 </Button>
               </Box>
-              <DynamicForm insuranceType={insuranceType} />
+              <DynamicForm formId={selectedFormId} />
             </Box>
           )}
         </Box>
       )}
-      
+
       {tabIndex === 1 && (
         <Box>
           <Typography variant="h5" gutterBottom>

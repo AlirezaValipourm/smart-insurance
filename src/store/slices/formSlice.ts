@@ -1,48 +1,70 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 /**
+ * Interface for form field option
+ */
+export interface FormFieldOption {
+  label?: string;
+  value?: string;
+}
+
+/**
+ * Interface for dynamic options configuration
+ */
+export interface DynamicOptionsConfig {
+  dependsOn: string;
+  endpoint: string;
+  method: string;
+}
+
+/**
+ * Interface for field visibility condition
+ */
+export interface VisibilityCondition {
+  dependsOn: string;
+  condition: string;
+  value: string | boolean;
+}
+
+/**
+ * Interface for field validation
+ */
+export interface FieldValidation {
+  min?: number;
+  max?: number;
+  pattern?: string;
+}
+
+/**
  * Interface for form field
  */
 export interface FormField {
   id: string;
-  type: string;
   label: string;
-  required: boolean;
-  options?: { label: string; value: string }[];
-  dependsOn?: {
-    field: string;
-    value: string | boolean;
-  };
-  validation?: {
-    type: string;
-    params?: any;
-  }[];
-}
-
-/**
- * Interface for form section
- */
-export interface FormSection {
-  id: string;
-  title: string;
-  fields: FormField[];
+  type: string;
+  required?: boolean;
+  options?: string[] | FormFieldOption[];
+  dynamicOptions?: DynamicOptionsConfig;
+  visibility?: VisibilityCondition;
+  validation?: FieldValidation;
+  fields?: FormField[]; // For nested fields in groups
 }
 
 /**
  * Interface for form structure
  */
 export interface FormStructure {
-  id: string;
+  formId: string;
   title: string;
-  type: string;
-  sections: FormSection[];
+  fields: FormField[];
 }
 
 /**
  * Interface for form state
  */
 interface FormState {
-  formStructure: FormStructure | null;
+  forms: FormStructure[];
+  currentForm: FormStructure | null;
   formData: Record<string, any>;
   loading: boolean;
   error: string | null;
@@ -54,7 +76,8 @@ interface FormState {
  * Initial state for form slice
  */
 const initialState: FormState = {
-  formStructure: null,
+  forms: [],
+  currentForm: null,
   formData: {},
   loading: false,
   error: null,
@@ -69,9 +92,14 @@ const formSlice = createSlice({
   name: 'form',
   initialState,
   reducers: {
-    // Set form structure
-    setFormStructure: (state, action: PayloadAction<FormStructure>) => {
-      state.formStructure = action.payload;
+    // Set all available forms
+    setForms: (state, action: PayloadAction<FormStructure[]>) => {
+      state.forms = action.payload;
+    },
+    
+    // Set current form
+    setCurrentForm: (state, action: PayloadAction<FormStructure>) => {
+      state.currentForm = action.payload;
     },
     
     // Set form data
@@ -107,12 +135,17 @@ const formSlice = createSlice({
     // Set current insurance type
     setCurrentInsuranceType: (state, action: PayloadAction<string>) => {
       state.currentInsuranceType = action.payload;
+      
+      // Set the current form based on the insurance type
+      const form = state.forms.find(form => form.formId === action.payload);
+      if (form) {
+        state.currentForm = form;
+      }
     },
     
     // Save draft
     saveDraft: (state) => {
       state.isDraft = true;
-      // In a real app, we might save to localStorage here
     },
     
     // Clear draft
@@ -123,7 +156,8 @@ const formSlice = createSlice({
 });
 
 export const {
-  setFormStructure,
+  setForms,
+  setCurrentForm,
   setFormData,
   updateFormField,
   setLoading,

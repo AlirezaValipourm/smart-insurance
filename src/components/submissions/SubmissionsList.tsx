@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Paper,
@@ -30,6 +30,7 @@ import {
   ViewColumn as ViewColumnIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import { RootState } from '../../store';
 import {
   setCurrentPage,
   setItemsPerPage,
@@ -37,6 +38,7 @@ import {
   setSort,
   toggleColumnVisibility,
 } from '../../store/slices/submissionsSlice';
+import { useSubmissionsData } from '../../hooks/useSubmissionsData';
 
 // Define the submission type
 interface Submission {
@@ -52,41 +54,18 @@ export default function SubmissionsList() {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   
-  // Mock data for demonstration
-  const visibleColumns = ['Full Name', 'Age', 'Insurance Type', 'City', 'Status'];
-  const columns = ['Full Name', 'Age', 'Insurance Type', 'City', 'Status', 'Email', 'Phone'];
-  const sortBy = 'Full Name';
-  const sortDirection = 'asc';
-  const searchTerm = '';
-  const currentPage = 1;
-  const itemsPerPage = 10;
-  const totalItems = 2;
+  // Get submissions data from Redux and React Query
+  const {
+    visibleColumns,
+    columns,
+    sortBy,
+    sortDirection,
+    searchTerm,
+    currentPage,
+    itemsPerPage,
+  } = useSelector((state: RootState) => state.submissions);
   
-  const submissions: Submission[] = [
-    {
-      id: '1',
-      'Full Name': 'John Doe',
-      'Age': 28,
-      'Insurance Type': 'Health',
-      'City': 'New York',
-      'Status': 'Pending',
-      'Email': 'john@example.com',
-      'Phone': '123-456-7890',
-    },
-    {
-      id: '2',
-      'Full Name': 'Jane Smith',
-      'Age': 32,
-      'Insurance Type': 'Life',
-      'City': 'Los Angeles',
-      'Status': 'Approved',
-      'Email': 'jane@example.com',
-      'Phone': '987-654-3210',
-    },
-  ];
-  
-  const isLoading = false;
-  const error = null;
+  const { submissions, isLoading, error, refetch, totalItems } = useSubmissionsData();
   
   // Handle column visibility toggle
   const handleColumnVisibilityClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -125,7 +104,7 @@ export default function SubmissionsList() {
   
   // Handle refresh
   const handleRefresh = () => {
-    console.log('Refreshing data');
+    refetch();
   };
   
   const open = Boolean(anchorEl);
@@ -141,7 +120,7 @@ export default function SubmissionsList() {
   if (error) {
     return (
       <Alert severity="error">
-        Error loading submissions: Unknown error
+        Error loading submissions: {error instanceof Error ? error.message : 'Unknown error'}
       </Alert>
     );
   }

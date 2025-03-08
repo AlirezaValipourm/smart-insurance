@@ -12,41 +12,47 @@ import {
   Step, 
   StepLabel,
   Alert,
-  Snackbar
+  Snackbar,
+  Divider
 } from '@mui/material';
 import { RootState } from '../../store';
-import { resetForm } from '../../store/slices/formSlice';
+import { resetForm, FormStructure, FormField as FormFieldType } from '../../store/slices/formSlice';
 import { useFormData } from '../../hooks/useFormData';
-import { useFormValidation } from '../../hooks/useFormValidation';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import FormSection from './FormSection';
 
 interface DynamicFormProps {
-  insuranceType?: string;
+  formId: string;
 }
 
 /**
  * Dynamic form component that renders a form based on the form structure
- * @param insuranceType - Optional insurance type to filter forms
+ * @param formId - The ID of the form to render
  * @returns The dynamic form component
  */
-export default function DynamicForm({ insuranceType }: DynamicFormProps) {
+export default function DynamicForm({ formId }: DynamicFormProps) {
   const dispatch = useDispatch();
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   
   // Get form data from Redux and React Query
-  const { formStructure, formData, isDraft } = useSelector((state: RootState) => state.form);
-  const { isLoading, error, submitForm, isSubmitting, submitError } = useFormData(insuranceType);
+  const { formData, isDraft } = useSelector((state: RootState) => state.form);
+  const { currentForm, isLoading, error, submitForm, isSubmitting, submitError } = useFormData(formId);
   
-  // Get form validation methods from React Hook Form
-  const { 
-    handleSubmit, 
-    errors, 
-    isValid,
-    formValues,
-    reset
-  } = useFormValidation();
+  // Create a simple form schema
+  const formSchema = z.object({}).catchall(z.any());
+  
+  // Initialize React Hook Form
+  const methods = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: formData,
+    mode: 'onChange',
+  });
+  
+  const { handleSubmit, reset, formState: { isValid } } = methods;
 
   // Reset form when component unmounts
   useEffect(() => {
@@ -60,7 +66,17 @@ export default function DynamicForm({ insuranceType }: DynamicFormProps) {
 
   // Handle form submission
   const onSubmit = (data: Record<string, any>) => {
-    submitForm(data, {
+    // Process form data to handle nested fields and checkbox groups
+    const processedData = processFormData(data, currentForm || null);
+    
+    // Add form ID to form data
+    const submissionData = {
+      ...processedData,
+      formId,
+      submittedAt: new Date().toISOString(),
+    };
+    
+    submitForm(submissionData, {
       onSuccess: () => {
         setIsSubmitted(true);
         setOpenSnackbar(true);
@@ -69,10 +85,53 @@ export default function DynamicForm({ insuranceType }: DynamicFormProps) {
       },
     });
   };
+  
+  // Process form data to handle nested fields and checkbox groups
+  const processFormData = (data: Record<string, any>, form: FormStructure | null) => {
+    if (!form) return data;
+    
+    const result: Record<string, any> = { ...data };
+    
+    // Process each field
+    const processFields = (fields: FormFieldType[]) => {
+      fields.forEach(field => {
+        // Handle group fields
+        if (field.type === 'group' && field.fields) {
+          // Create an object for the group if it doesn't exist
+          if (!result[field.id]) {
+            result[field.id] = {};
+          }
+          
+          // Process nested fields
+          field.fields.forEach(nestedField => {
+            // If the nested field has a value in the form data, add it to the group
+            if (data[nestedField.id] !== undefined) {
+              result[field.id][nestedField.id] = data[nestedField.id];
+              
+              // Remove the flat field from the result to avoid duplication
+              delete result[nestedField.id];
+            }
+          });
+        }
+      });
+    };
+    
+    processFields(form.fields);
+    return result;
+  };
+
+  // Group fields into steps
+  const fieldGroups = currentForm?.fields.filter(field => field.type === 'group') || [];
+  const standaloneFields = currentForm?.fields.filter(field => field.type !== 'group') || [];
+  
+  // Combine standalone fields into a single group if there are any
+  const steps = standaloneFields.length > 0 
+    ? [{ id: 'general', label: 'General Information', type: 'group', fields: standaloneFields }, ...fieldGroups]
+    : fieldGroups;
 
   // Handle next step
   const handleNext = async () => {
-    if (activeStep === (formStructure?.sections.length || 0) - 1) {
+    if (activeStep === steps.length - 1) {
       // Last step, submit form
       handleSubmit(onSubmit)();
     } else {
@@ -107,10 +166,10 @@ export default function DynamicForm({ insuranceType }: DynamicFormProps) {
     );
   }
 
-  if (!formStructure) {
+  if (!currentForm) {
     return (
       <Alert severity="info">
-        No form structure available. Please select an insurance type.
+        No form found with ID {formId}. Please select a different form.
       </Alert>
     );
   }
@@ -118,7 +177,7 @@ export default function DynamicForm({ insuranceType }: DynamicFormProps) {
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
       <Typography variant="h4" gutterBottom>
-        {formStructure.title}
+        {currentForm.title}
       </Typography>
       
       {isDraft && (
@@ -127,50 +186,61 @@ export default function DynamicForm({ insuranceType }: DynamicFormProps) {
         </Alert>
       )}
       
-      <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-        {formStructure.sections.map((section) => (
-          <Step key={section.id}>
-            <StepLabel>{section.title}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
+      {steps.length > 1 && (
+        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+          {steps.map((step) => (
+            <Step key={step.id}>
+              <StepLabel>{step.label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      )}
       
-      <form>
-        {formStructure.sections.map((section, index) => (
-          <Box
-            key={section.id}
-            sx={{ display: activeStep === index ? 'block' : 'none' }}
-          >
-            <Typography variant="h6" gutterBottom>
-              {section.title}
-            </Typography>
-            
-            <FormSection 
-              section={section} 
-              formData={formValues} 
-            />
-          </Box>
-        ))}
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-          <Button
-            variant="outlined"
-            disabled={activeStep === 0}
-            onClick={handleBack}
-          >
-            Back
-          </Button>
+      <Divider sx={{ mb: 3 }} />
+      
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {steps.map((step, index) => (
+            <Box
+              key={step.id}
+              sx={{ display: activeStep === index ? 'block' : 'none' }}
+            >
+              <FormSection 
+                field={step} 
+                formData={formData} 
+              />
+            </Box>
+          ))}
           
-          <Button
-            variant="contained"
-            onClick={handleNext}
-            disabled={isSubmitting || (activeStep === formStructure.sections.length - 1 && !isValid)}
-          >
-            {activeStep === formStructure.sections.length - 1 ? 'Submit' : 'Next'}
-            {isSubmitting && <CircularProgress size={24} sx={{ ml: 1 }} />}
-          </Button>
-        </Box>
-      </form>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+            <Button
+              variant="outlined"
+              disabled={activeStep === 0}
+              onClick={handleBack}
+            >
+              Back
+            </Button>
+            
+            {activeStep === steps.length - 1 ? (
+              <Button
+                variant="contained"
+                type="submit"
+                disabled={isSubmitting || !isValid}
+              >
+                Submit
+                {isSubmitting && <CircularProgress size={24} sx={{ ml: 1 }} />}
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                onClick={handleNext}
+              >
+                Next
+              </Button>
+            )}
+          </Box>
+        </form>
+      </FormProvider>
       
       <Snackbar
         open={openSnackbar}
