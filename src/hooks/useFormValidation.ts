@@ -80,7 +80,6 @@ export const useFormValidation = () => {
       } else if (field.type === 'radio') {
         fieldSchema = z.string();
       } else if (field.type === 'checkbox' && Array.isArray(field.options) && field.options.length > 0) {
-        // For checkbox groups, validate as array of strings
         fieldSchema = z.array(z.string()).optional();
         if (field.required) {
           fieldSchema = z.array(z.string()).min(1, 'At least one option must be selected');

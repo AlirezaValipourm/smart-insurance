@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { 
-  Box, 
-  Button, 
-  CircularProgress, 
-  Typography, 
-  Paper, 
-  Stepper, 
-  Step, 
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Typography,
+  Paper,
+  Stepper,
+  Step,
   StepLabel,
   Alert,
   Snackbar,
@@ -37,21 +37,21 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  
+
   // Get form data from Redux and React Query
   const { formData, isDraft } = useSelector((state: RootState) => state.form);
   const { currentForm, isLoading, error, submitForm, isSubmitting, submitError } = useFormData(formId);
-  
+
   // Create a simple form schema
   const formSchema = z.object({}).catchall(z.any());
-  
+
   // Initialize React Hook Form
   const methods = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: formData,
     mode: 'onChange',
   });
-  
+
   const { handleSubmit, reset, formState: { isValid } } = methods;
 
   // Reset form when component unmounts
@@ -68,14 +68,14 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
   const onSubmit = (data: Record<string, any>) => {
     // Process form data to handle nested fields and checkbox groups
     const processedData = processFormData(data, currentForm || null);
-    
+
     // Add form ID to form data
     const submissionData = {
       ...processedData,
       formId,
       submittedAt: new Date().toISOString(),
     };
-    
+
     submitForm(submissionData, {
       onSuccess: () => {
         setIsSubmitted(true);
@@ -85,59 +85,68 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
       },
     });
   };
-  
+
   // Process form data to handle nested fields and checkbox groups
   const processFormData = (data: Record<string, any>, form: FormStructure | null) => {
     if (!form) return data;
-    
-    const result: Record<string, any> = { ...data };
-    
-    // Process each field
-    const processFields = (fields: FormFieldType[]) => {
-      fields.forEach(field => {
-        // Handle group fields
-        if (field.type === 'group' && field.fields) {
-          // Create an object for the group if it doesn't exist
-          if (!result[field.id]) {
-            result[field.id] = {};
-          }
-          
-          // Process nested fields
-          field.fields.forEach(nestedField => {
-            // If the nested field has a value in the form data, add it to the group
-            if (data[nestedField.id] !== undefined) {
-              result[field.id][nestedField.id] = data[nestedField.id];
-              
-              // Remove the flat field from the result to avoid duplication
-              delete result[nestedField.id];
+
+    try {
+      const result: Record<string, any> = { ...data };
+
+      // Process each field
+      const processFields = (fields: FormFieldType[]) => {
+        fields.forEach(field => {
+          // Handle group fields
+          if (field.type === 'group' && field.fields) {
+            // Create an object for the group if it doesn't exist
+            if (!result[field.id]) {
+              result[field.id] = {};
             }
-          });
-        }
-      });
-    };
-    
-    processFields(form.fields);
-    return result;
+
+            // Process nested fields
+            field.fields.forEach(nestedField => {
+              // If the nested field has a value in the form data, add it to the group
+              if (data[nestedField.id] !== undefined) {
+                result[field.id][nestedField.id] = data[nestedField.id];
+
+                // Remove the flat field from the result to avoid duplication
+                delete result[nestedField.id];
+              }
+            });
+          }
+
+          // Handle checkbox fields with multiple selections
+          if (field.type === 'checkbox' && Array.isArray(field.options) && field.options.length > 0) {
+            // Ensure checkbox values are always arrays
+            if (result[field.id] && !Array.isArray(result[field.id])) {
+              result[field.id] = [result[field.id]];
+            }
+          }
+        });
+      };
+
+      processFields(form.fields);
+      return result;
+    } catch (error) {
+      console.error('Error processing form data:', error);
+      // Return original data if processing fails
+      return data;
+    }
   };
 
   // Group fields into steps
   const fieldGroups = currentForm?.fields.filter(field => field.type === 'group') || [];
   const standaloneFields = currentForm?.fields.filter(field => field.type !== 'group') || [];
-  
+
   // Combine standalone fields into a single group if there are any
-  const steps = standaloneFields.length > 0 
+  const steps = standaloneFields.length > 0
     ? [{ id: 'general', label: 'General Information', type: 'group', fields: standaloneFields }, ...fieldGroups]
     : fieldGroups;
 
   // Handle next step
   const handleNext = async () => {
-    if (activeStep === steps.length - 1) {
-      // Last step, submit form
-      handleSubmit(onSubmit)();
-    } else {
-      // Go to next step
-      setActiveStep((prevStep) => prevStep + 1);
-    }
+    // Only go to next step, never submit the form here
+    setActiveStep((prevStep) => prevStep + 1);
   };
 
   // Handle back step
@@ -148,6 +157,11 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
   // Handle close snackbar
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
+  };
+
+  // Handle form submission
+  const handleFormSubmit = () => {
+    handleSubmit(onSubmit)();
   };
 
   if (isLoading) {
@@ -179,13 +193,13 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
       <Typography variant="h4" gutterBottom>
         {currentForm.title}
       </Typography>
-      
+
       {isDraft && (
         <Alert severity="info" sx={{ mb: 2 }}>
           You have a draft in progress. Your changes are being saved automatically.
         </Alert>
       )}
-      
+
       {steps.length > 1 && (
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
           {steps.map((step) => (
@@ -195,23 +209,23 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
           ))}
         </Stepper>
       )}
-      
+
       <Divider sx={{ mb: 3 }} />
-      
+
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={(e) => e.preventDefault()}>
           {steps.map((step, index) => (
             <Box
               key={step.id}
               sx={{ display: activeStep === index ? 'block' : 'none' }}
             >
-              <FormSection 
-                field={step} 
-                formData={formData} 
+              <FormSection
+                field={step}
+                formData={formData}
               />
             </Box>
           ))}
-          
+
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
             <Button
               variant="outlined"
@@ -220,11 +234,12 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
             >
               Back
             </Button>
-            
+
             {activeStep === steps.length - 1 ? (
               <Button
                 variant="contained"
-                type="submit"
+                type="button"
+                onClick={handleFormSubmit}
                 disabled={isSubmitting || !isValid}
               >
                 Submit
@@ -233,6 +248,7 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
             ) : (
               <Button
                 variant="contained"
+                type="button"
                 onClick={handleNext}
               >
                 Next
@@ -241,7 +257,7 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
           </Box>
         </form>
       </FormProvider>
-      
+
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
@@ -251,7 +267,7 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
           Form submitted successfully!
         </Alert>
       </Snackbar>
-      
+
       {submitError && (
         <Alert severity="error" sx={{ mt: 2 }}>
           Error submitting form: {submitError instanceof Error ? submitError.message : 'Unknown error'}

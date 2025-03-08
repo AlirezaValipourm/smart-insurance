@@ -7,6 +7,7 @@ import { SubmissionItem } from '../store/slices/submissionsSlice';
  * Using a relative URL to our Next.js API proxy to avoid CORS issues
  */
 const BASE_URL = '/api/external';
+// const BASE_URL = 'https://assignment.devotel.io/';
 
 /**
  * Axios instance with base configuration
@@ -114,54 +115,55 @@ export const insuranceApi = {
     endpoint: string,
     dependentValue: string
   ): Promise<string[] | { label: string; value: string }[]> => {
+    console.log("getfieldoptions", endpoint, dependentValue);
     try {
-      // For testing purposes, return mock data based on the dependent value
-      // In a real application, this would make an API call to the endpoint
-      
-      // Mock implementation for states based on country
-      if (endpoint === '/api/getStates') {
-        console.log(`Fetching states for country: ${dependentValue}`);
-        switch (dependentValue) {
-          case 'USA':
-            return [
-              'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 
-              'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia'
-            ];
-          case 'Canada':
-            return [
-              'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 
-              'Newfoundland and Labrador', 'Nova Scotia', 'Ontario', 
-              'Prince Edward Island', 'Quebec', 'Saskatchewan'
-            ];
-          case 'Germany':
-            return [
-              'Baden-Württemberg', 'Bavaria', 'Berlin', 'Brandenburg', 
-              'Bremen', 'Hamburg', 'Hesse', 'Lower Saxony', 
-              'Mecklenburg-Vorpommern', 'North Rhine-Westphalia'
-            ];
-          case 'France':
-            return [
-              'Auvergne-Rhône-Alpes', 'Bourgogne-Franche-Comté', 'Brittany', 
-              'Centre-Val de Loire', 'Corsica', 'Grand Est', 
-              'Hauts-de-France', 'Île-de-France', 'Normandy', 'Nouvelle-Aquitaine'
-            ];
-          default:
-            console.log(`No states found for country: ${dependentValue}`);
-            return [];
-        }
+      // Prevent empty or undefined dependent values from causing issues
+      if (!dependentValue) {
+        console.log('No dependent value provided for dynamic options');
+        return [];
       }
-      
-      // If not a known endpoint, try to fetch from the API
-      // Remove the leading slash if present
+
+      // Special handling for getStates endpoint
+      if (endpoint === '/api/getStates') {
+        // Use our internal API endpoint
+        console.log(`Fetching states for country: ${dependentValue}`);
+        const response = await axios.get('/api/external/getStates', {
+          params: { country: dependentValue }
+        });
+        console.log("response", response);
+        if (response.data.states && Array.isArray(response.data.states)) {
+          console.log(`Successfully fetched ${response.data.states.length} states for ${dependentValue}`);
+          return response.data.states;
+        }
+        return [];
+      }
+
+      // For other endpoints, use the external API proxy
+      // Clean the endpoint to ensure proper formatting
       const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-      
-      const response = await apiClient.get(cleanEndpoint, {
-        params: { dependentValue },
-      });
-      return response.data;
+
+      // Try to fetch from the actual API
+      try {
+        console.log(`Fetching options from ${cleanEndpoint} with value: ${dependentValue}`);
+        const response = await apiClient.get(cleanEndpoint, {
+          params: { dependentValue },
+        });
+
+        if (response.data && Array.isArray(response.data)) {
+          console.log(`Successfully fetched ${response.data.length} options from API`);
+          return response.data;
+        }
+      } catch (apiError) {
+        console.warn(`API call failed, falling back to mock data: ${apiError}`);
+        // Continue to mock data if API call fails
+      }
+
+      // Fallback to mock data for testing purposes
+      console.warn(`No data available for endpoint: ${endpoint}`);
+      return [];
     } catch (error) {
       console.error(`Error fetching options from ${endpoint}:`, error);
-      throw error;
+      return [];
     }
   },
 

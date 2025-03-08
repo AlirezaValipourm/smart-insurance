@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  TextField, 
-  Checkbox, 
-  FormControlLabel, 
-  FormControl, 
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  TextField,
+  Checkbox,
+  FormControlLabel,
+  FormControl,
   FormHelperText,
-  InputLabel, 
-  Select, 
-  MenuItem, 
+  InputLabel,
+  Select,
+  MenuItem,
   Switch,
   Radio,
   RadioGroup,
@@ -19,7 +19,7 @@ import {
   Box
 } from '@mui/material';
 import { FormField as FormFieldType } from '../../store/slices/formSlice';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { useFormData } from '../../hooks/useFormData';
 
 interface FormFieldProps {
@@ -36,71 +36,83 @@ interface FormFieldProps {
 export default function FormField({ field, formData }: FormFieldProps) {
   const [dynamicOptions, setDynamicOptions] = useState<any[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
-  
+
   const { fetchFieldOptions } = useFormData();
   const { register, formState: { errors }, setValue, watch } = useFormContext();
-  
+
   const fieldValue = watch(field.id);
   const error = errors[field.id];
   const errorMessage = error ? String(error.message) : '';
-  
-  // Fetch dynamic options if needed
+
+  const dependentValue = field.dynamicOptions?.dependsOn ? useWatch({ name: field.dynamicOptions.dependsOn }) : undefined;
+
   useEffect(() => {
     const fetchOptions = async () => {
-      if (field.dynamicOptions && field.dynamicOptions.dependsOn) {
-        const dependentField = field.dynamicOptions.dependsOn;
-        // Handle case where dependent field might be in a parent group
-        // For example, state depends on country but might be in different groups
-        let dependentValue = watch(dependentField);
-        
-        // If we can't find the value directly, try to find it in the parent form data
-        if (dependentValue === undefined && formData) {
-          dependentValue = formData[dependentField];
-        }
-        
-        if (dependentValue) {
+      if (field.dynamicOptions && field.dynamicOptions.endpoint) {
+        // Only fetch if we have a dependent value or the endpoint doesn't require one
+        if (dependentValue || !field.dynamicOptions.dependsOn) {
           setIsLoadingOptions(true);
+          setDynamicOptions([]); // Clear previous options while loading
+
           try {
+            console.log(`Fetching options for ${field.id} from ${field.dynamicOptions.endpoint}`);
             const options = await fetchFieldOptions(
               field.dynamicOptions.endpoint,
-              dependentValue
+              dependentValue || ''
             );
-            
+            console.log("options", options);
             // Format options consistently
-            const formattedOptions = Array.isArray(options) 
+            const formattedOptions = Array.isArray(options)
               ? options.map(opt => typeof opt === 'string' ? { label: opt, value: opt } : opt)
-              : options;
-              
+              : [];
+            console.log("formattedOptions", formattedOptions);
+            console.log(`Received ${formattedOptions.length} options for ${field.id}`);
             setDynamicOptions(formattedOptions);
           } catch (error) {
             console.error(`Error fetching options for field ${field.id}:`, error);
+            setDynamicOptions([]); // Clear options on error
           } finally {
             setIsLoadingOptions(false);
           }
         }
       }
     };
-    
+
+    // Fetch options when the component mounts or when the dependent value changes
     fetchOptions();
-  }, [field.dynamicOptions, watch, field.id, fetchFieldOptions, formData]);
-  
+
+    // Set up a timer to periodically refresh options if needed
+    // This is useful for options that might change over time
+    const refreshInterval = setInterval(() => {
+      if (field.dynamicOptions?.refreshInterval) {
+        fetchOptions();
+      }
+    }, field.dynamicOptions?.refreshInterval || 300000); // Default to 5 minutes
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [dependentValue, field.dynamicOptions, field.id, fetchFieldOptions]);
+
   // Handle onChange manually for some components
-  const handleChange = (value: any) => {
+  const handleChange = useCallback((value: any) => {
     setValue(field.id, value, { shouldValidate: true });
-  };
-  
+  }, [field.id, setValue]);
+
   // Register field with react-hook-form
   const { onChange, onBlur, name, ref } = register(field.id);
-  
+
   // Process options to ensure they're in the right format
-  const processOptions = (options: any[] | undefined) => {
+  const processOptions = useCallback((options: any[] | undefined) => {
     if (!options) return [];
     return options.map(opt => typeof opt === 'string' ? { label: opt, value: opt } : opt);
-  };
-  
+  }, []);
+
   // Combine static and dynamic options
-  const allOptions = [...processOptions(field.options), ...dynamicOptions];
-  
+  const allOptions = useMemo(() => {
+    return [...processOptions(field.options), ...dynamicOptions];
+  }, [processOptions, field.options, dynamicOptions]);
+
   // Render field based on its type
   switch (field.type) {
     case 'text':
@@ -109,14 +121,14 @@ export default function FormField({ field, formData }: FormFieldProps) {
     case 'password':
       // Add pattern validation if specified
       const registerOptions: any = {};
-      
+
       if (field.validation?.pattern) {
         registerOptions.validate = (value: string) => {
           const pattern = new RegExp(field.validation!.pattern!);
           return pattern.test(value) || `Invalid format. Expected pattern: ${field.validation!.pattern}`;
         };
       }
-      
+
       return (
         <TextField
           id={field.id}
@@ -142,7 +154,7 @@ export default function FormField({ field, formData }: FormFieldProps) {
           required={field.required}
         />
       );
-      
+
     case 'number':
       return (
         <TextField
@@ -157,51 +169,63 @@ export default function FormField({ field, formData }: FormFieldProps) {
           error={!!error}
           helperText={errorMessage}
           required={field.required}
-          inputProps={{ 
+          inputProps={{
             min: field.validation?.min,
             max: field.validation?.max
           }}
         />
       );
-      
+
     case 'select':
       return (
-        <FormControl fullWidth error={!!error} required={field.required}>
+        <FormControl fullWidth error={!!error}>
           <InputLabel id={`${field.id}-label`}>{field.label}</InputLabel>
           <Select
             labelId={`${field.id}-label`}
             id={field.id}
             name={name}
             inputRef={ref}
-            label={field.label}
             value={fieldValue || ''}
             onChange={(e) => {
+              // Call the original onChange from react-hook-form first
               onChange(e);
-              handleChange(e.target.value);
+
+              // Prevent unnecessary state updates if value hasn't changed
+              if (e.target.value !== fieldValue) {
+                // Use a timeout to prevent UI freezing during state updates
+                setTimeout(() => {
+                  handleChange(e.target.value);
+                }, 0);
+              }
             }}
             onBlur={onBlur}
+            label={field.label}
+            disabled={isLoadingOptions}
+            required={field.required}
           >
             {isLoadingOptions ? (
-              <MenuItem disabled>
-                <CircularProgress size={20} />
+              <MenuItem value="" disabled>
+                Loading options...
               </MenuItem>
-            ) : (
-              allOptions.map((option) => {
-                const optionValue = typeof option === 'string' ? option : option.value;
-                const optionLabel = typeof option === 'string' ? option : option.label;
-                
-                return (
-                  <MenuItem key={optionValue} value={optionValue}>
-                    {optionLabel}
-                  </MenuItem>
-                );
-              })
-            )}
+            ) : allOptions.length === 0 ? (
+              <MenuItem value="" disabled>
+                No options available
+              </MenuItem>
+            ) : [
+              <MenuItem key="empty" value="">
+                <em>Select an option</em>
+              </MenuItem>,
+              ...allOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))
+            ]}
           </Select>
           {error && <FormHelperText>{errorMessage}</FormHelperText>}
         </FormControl>
       );
-      
+
     case 'checkbox':
       if (Array.isArray(field.options) && field.options.length > 0) {
         // Multiple checkboxes
@@ -212,12 +236,12 @@ export default function FormField({ field, formData }: FormFieldProps) {
               {allOptions.map((option) => {
                 const optionValue = typeof option === 'string' ? option : option.value;
                 const optionLabel = typeof option === 'string' ? option : option.label;
-                
+
                 // For multiple checkboxes, we need to track an array of values
-                const isChecked = Array.isArray(fieldValue) 
+                const isChecked = Array.isArray(fieldValue)
                   ? fieldValue.includes(optionValue)
                   : false;
-                
+
                 return (
                   <FormControlLabel
                     key={optionValue}
@@ -226,11 +250,11 @@ export default function FormField({ field, formData }: FormFieldProps) {
                         checked={isChecked}
                         onChange={(e) => {
                           let newValue: string[] = [];
-                          
+
                           if (Array.isArray(fieldValue)) {
                             newValue = [...fieldValue];
                           }
-                          
+
                           if (e.target.checked) {
                             if (!newValue.includes(optionValue)) {
                               newValue.push(optionValue);
@@ -238,7 +262,7 @@ export default function FormField({ field, formData }: FormFieldProps) {
                           } else {
                             newValue = newValue.filter(v => v !== optionValue);
                           }
-                          
+
                           handleChange(newValue);
                         }}
                       />
@@ -252,7 +276,7 @@ export default function FormField({ field, formData }: FormFieldProps) {
           </FormControl>
         );
       }
-      
+
       // Single checkbox
       return (
         <FormControlLabel
@@ -271,7 +295,7 @@ export default function FormField({ field, formData }: FormFieldProps) {
           label={field.label}
         />
       );
-      
+
     case 'radio':
       return (
         <FormControl required={field.required} error={!!error}>
@@ -287,7 +311,7 @@ export default function FormField({ field, formData }: FormFieldProps) {
             {allOptions.map((option) => {
               const optionValue = typeof option === 'string' ? option : option.value;
               const optionLabel = typeof option === 'string' ? option : option.label;
-              
+
               return (
                 <FormControlLabel
                   key={optionValue}
@@ -301,7 +325,7 @@ export default function FormField({ field, formData }: FormFieldProps) {
           {error && <FormHelperText>{errorMessage}</FormHelperText>}
         </FormControl>
       );
-      
+
     case 'date':
       return (
         <TextField
@@ -319,7 +343,7 @@ export default function FormField({ field, formData }: FormFieldProps) {
           InputLabelProps={{ shrink: true }}
         />
       );
-      
+
     default:
       return (
         <TextField

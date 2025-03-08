@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import { insuranceApi } from '../services/api';
@@ -116,14 +116,22 @@ export const useFormData = (formId?: string) => {
   };
 
   // Function to fetch field options dynamically
-  const fetchFieldOptions = async (endpoint: string, dependentValue: string) => {
+  const fetchFieldOptions = useCallback(async (endpoint: string, dependentValue: string) => {
+    if (!endpoint || !dependentValue) {
+      console.warn('Missing endpoint or dependent value for fetchFieldOptions');
+      return [];
+    }
+    
     try {
-      return await insuranceApi.getFieldOptions(endpoint, dependentValue);
+      const response = await insuranceApi.getFieldOptions(endpoint, dependentValue);
+      console.log("response", response);
+      return response;
     } catch (error) {
       console.error(`Error fetching options from ${endpoint}:`, error);
-      throw error;
+      // Return empty array instead of throwing to prevent UI issues
+      return [];
     }
-  };
+  }, []);
 
   return {
     forms,

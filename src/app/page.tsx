@@ -1,25 +1,24 @@
 'use client';
 
-import { useState } from 'react';
 import {
-  Container,
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  Paper,
-  Button,
-  useTheme,
-  useMediaQuery,
-  CircularProgress,
   Alert,
+  Box,
+  Button,
   Card,
+  CardActionArea,
   CardContent,
-  CardActionArea
+  CircularProgress,
+  Container,
+  Tab,
+  Tabs,
+  Typography,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import DynamicForm from '../components/forms/DynamicForm';
 import SubmissionsList from '../components/submissions/SubmissionsList';
-import { useDispatch } from 'react-redux';
 import { useFormData } from '../hooks/useFormData';
 
 /**

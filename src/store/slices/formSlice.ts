@@ -12,9 +12,10 @@ export interface FormFieldOption {
  * Interface for dynamic options configuration
  */
 export interface DynamicOptionsConfig {
-  dependsOn: string;
+  dependsOn?: string;
   endpoint: string;
-  method: string;
+  method?: string;
+  refreshInterval?: number; // Time in milliseconds to refresh options
 }
 
 /**
