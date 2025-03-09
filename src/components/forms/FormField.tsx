@@ -60,12 +60,10 @@ export default function FormField({ field, formData }: FormFieldProps) {
               field.dynamicOptions.endpoint,
               dependentValue || ''
             );
-            console.log("options", options);
             // Format options consistently
             const formattedOptions = Array.isArray(options)
               ? options.map(opt => typeof opt === 'string' ? { label: opt, value: opt } : opt)
               : [];
-            console.log("formattedOptions", formattedOptions);
             console.log(`Received ${formattedOptions.length} options for ${field.id}`);
             setDynamicOptions(formattedOptions);
           } catch (error) {

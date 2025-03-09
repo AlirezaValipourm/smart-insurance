@@ -115,7 +115,6 @@ export const insuranceApi = {
     endpoint: string,
     dependentValue: string
   ): Promise<string[] | { label: string; value: string }[]> => {
-    console.log("getfieldoptions", endpoint, dependentValue);
     try {
       // Prevent empty or undefined dependent values from causing issues
       if (!dependentValue) {

@@ -41,7 +41,6 @@ function SettingsProvider({
 }: SettingsProviderProps) {
   const [settings, setSettings] = useSettingCookies(defaultSettings);
   const onChangeMode = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("changing mode", event.target.value)
     setSettings({
       ...settings,
       themeMode: (event.target as HTMLInputElement).value as ThemeMode,
@@ -56,7 +55,6 @@ function SettingsProvider({
   };
 
   const onChangeDirection = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("changing direction", event.target.value)
     setSettings({
       ...settings,
       themeDirection: (event.target as HTMLInputElement).value as ThemeDirection,
@@ -64,7 +62,6 @@ function SettingsProvider({
   };
 
   const onChangeColor = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("changing color", event.target.value)
     setSettings({
       ...settings,
       themeColorPresets: (event.target as HTMLInputElement).value as ThemeColorPresets,
@@ -72,7 +69,6 @@ function SettingsProvider({
   };
 
   const onChangeLayout = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("changing layout", event.target.value)
     setSettings({
       ...settings,
       themeLayout: (event.target as HTMLInputElement).value as ThemeLayout,
@@ -80,7 +76,6 @@ function SettingsProvider({
   };
 
   const onToggleStretch = () => {
-    console.log("toggling stretch")
     setSettings({
       ...settings,
       themeStretch: !settings.themeStretch,
@@ -88,7 +83,6 @@ function SettingsProvider({
   };
 
   const onResetSetting = () => {
-    console.log("resetting settings")
     setSettings({
       themeMode: initialState.themeMode,
       themeLayout: initialState.themeLayout,
