@@ -3,7 +3,7 @@ import { ReactNode, useEffect } from 'react';
 // @mui
 import { CssBaseline } from '@mui/material';
 import { createTheme, ThemeOptions, ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
-import useSettings from '@/smart-insurance/hooks/useSettings';
+import { useSettings } from '@/smart-insurance/hooks/useSettings';
 import getColorPresets from '@/smart-insurance/utils/getColorPresets';
 import palette from '@/smart-insurance/config/mui/palette';
 import typography from '@/smart-insurance/config/mui/typography';
@@ -20,7 +20,7 @@ type Props = {
   children: ReactNode;
 };
 
-export default function ThemeProvider({ children }: Props) {
+export function ThemeProvider({ children }: Props) {
   const {
     themeMode,
     themeDirection,
