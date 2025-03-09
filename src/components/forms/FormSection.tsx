@@ -5,7 +5,7 @@ import { Box, Tooltip } from '@mui/material';
 import { FormField as FormFieldType } from '../../store/slices/formSlice';
 import { useFormContext } from 'react-hook-form';
 import Typography from '@mui/material/Typography';
-import FormField from './FormField';
+import { FormField } from './FormField';
 import { useDispatch } from 'react-redux';
 import { reorderFields } from '../../store/slices/formSlice';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -31,7 +31,7 @@ interface FormSectionProps {
  * @param isReorderingEnabled - Whether field reordering is enabled
  * @returns A section containing multiple form fields
  */
-export default function FormSection({ field, formData, isReorderingEnabled = false }: FormSectionProps) {
+export function FormSection({ field, formData, isReorderingEnabled = false }: FormSectionProps) {
   const { watch, getValues, formState: { errors } } = useFormContext();
   const dispatch = useDispatch();
   

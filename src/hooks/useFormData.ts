@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import { insuranceApi } from '../services/api';
 import { 
   setForms, 
   setCurrentForm,
-  setFormData,
   setLoading, 
   setError,
-  saveDraft as saveDraftAction,
-  clearDraft as clearDraftAction
+  resetForm
 } from '../store/slices/formSlice';
 
 /**
@@ -76,17 +74,6 @@ export const useFormData = (formId?: string) => {
     enabled: !!formId, // Only fetch if formId is provided
   });
 
-  // Load draft data when component mounts
-  useEffect(() => {
-    if (formId) {
-      const draftData = insuranceApi.loadDraft(formId);
-      if (draftData) {
-        dispatch(setFormData(draftData));
-        dispatch(saveDraftAction());
-      }
-    }
-  }, [formId, dispatch]);
-
   // Mutation for submitting form data
   const submitFormMutation = useMutation({
     mutationFn: (data: Record<string, any>) => {
@@ -96,24 +83,13 @@ export const useFormData = (formId?: string) => {
       return insuranceApi.submitForm(data, formId);
     },
     onSuccess: () => {
-      // Clear draft after successful submission
-      if (formId) {
-        insuranceApi.clearDraft(formId);
-        dispatch(clearDraftAction());
-      }
+      // Reset form after successful submission
+      dispatch(resetForm());
       
       // Invalidate and refetch submissions query to update the list
       queryClient.invalidateQueries({ queryKey: ['submissions'] });
     },
   });
-
-  // Function to save draft
-  const saveDraft = (formData: Record<string, any>) => {
-    if (formId) {
-      insuranceApi.saveDraft(formData, formId);
-      dispatch(saveDraftAction());
-    }
-  };
 
   // Function to fetch field options dynamically
   const fetchFieldOptions = useCallback(async (endpoint: string, dependentValue: string) => {
@@ -124,7 +100,6 @@ export const useFormData = (formId?: string) => {
     
     try {
       const response = await insuranceApi.getFieldOptions(endpoint, dependentValue);
-      console.log("response", response);
       return response;
     } catch (error) {
       console.error(`Error fetching options from ${endpoint}:`, error);
@@ -143,8 +118,5 @@ export const useFormData = (formId?: string) => {
     isSubmitting: submitFormMutation.isPending,
     submitError: submitFormMutation.error,
     fetchFieldOptions,
-    saveDraft,
   };
-};
-
-export default useFormData; 
+}; 

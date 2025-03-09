@@ -123,4 +123,4 @@ export const {
   setItemsPerPage,
 } = submissionsSlice.actions;
 
-export default submissionsSlice.reducer; 
+export const submissionsReducer = submissionsSlice.reducer; 

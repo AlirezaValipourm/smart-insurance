@@ -12,7 +12,7 @@ const BASE_URL = '/api/external';
 /**
  * Axios instance with base configuration
  */
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -129,7 +129,6 @@ export const insuranceApi = {
         const response = await axios.get('/api/external/getStates', {
           params: { country: dependentValue }
         });
-        console.log("response", response);
         if (response.data.states && Array.isArray(response.data.states)) {
           console.log(`Successfully fetched ${response.data.states.length} states for ${dependentValue}`);
           return response.data.states;
@@ -165,50 +164,4 @@ export const insuranceApi = {
       return [];
     }
   },
-
-  /**
-   * Save draft form data
-   * This is a client-side implementation using localStorage
-   * @param formData - The form data to save as draft
-   * @param formId - The ID of the form
-   */
-  saveDraft: (formData: Record<string, any>, formId: string): void => {
-    try {
-      localStorage.setItem(`draft_${formId}`, JSON.stringify(formData));
-      localStorage.setItem('draft_timestamp', new Date().toISOString());
-    } catch (error) {
-      console.error('Error saving draft:', error);
-    }
-  },
-
-  /**
-   * Load draft form data
-   * This is a client-side implementation using localStorage
-   * @param formId - The ID of the form
-   * @returns The draft form data or null if no draft exists
-   */
-  loadDraft: (formId: string): Record<string, any> | null => {
-    try {
-      const draft = localStorage.getItem(`draft_${formId}`);
-      return draft ? JSON.parse(draft) : null;
-    } catch (error) {
-      console.error('Error loading draft:', error);
-      return null;
-    }
-  },
-
-  /**
-   * Clear draft form data
-   * This is a client-side implementation using localStorage
-   * @param formId - The ID of the form
-   */
-  clearDraft: (formId: string): void => {
-    try {
-      localStorage.removeItem(`draft_${formId}`);
-    } catch (error) {
-      console.error('Error clearing draft:', error);
-    }
-  }
-};
-
-export default apiClient; 
+}; 

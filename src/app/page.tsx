@@ -16,9 +16,10 @@ import {
   useTheme
 } from '@mui/material';
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import DynamicForm from '../components/forms/DynamicForm';
-import SubmissionsList from '../components/submissions/SubmissionsList';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { DynamicForm } from '../components/forms/DynamicForm';
+import { SubmissionsList } from '../components/submissions/SubmissionsList';
 import { useFormData } from '../hooks/useFormData';
 
 /**
@@ -28,17 +29,14 @@ import { useFormData } from '../hooks/useFormData';
 export default function Home() {
   const [tabIndex, setTabIndex] = useState(0);
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
-  const dispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Get forms data
   const { forms, isLoading, error } = useFormData();
 
   // Handle tab change
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
-    // Reset selected form when changing tabs
     setSelectedFormId(null);
   };
 

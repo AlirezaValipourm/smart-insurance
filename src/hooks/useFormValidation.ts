@@ -6,8 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
 import { RootState } from '../store';
-import { FormField, saveDraft, updateFormField } from '../store/slices/formSlice';
-import { useFormData } from './useFormData';
+import { FormField, updateFormField } from '../store/slices/formSlice';
 
 /**
  * Custom hook for form validation using React Hook Form and Zod
@@ -18,7 +17,6 @@ export const useFormValidation = () => {
   
   // Get form structure and data from Redux
   const { currentForm, formData } = useSelector((state: RootState) => state.form);
-  const { saveDraft: saveFormDraft } = useFormData();
 
   // Build Zod schema dynamically based on form structure
   const buildZodSchema = () => {
@@ -135,20 +133,13 @@ export const useFormValidation = () => {
           dispatch(updateFormField({ field, value }));
         }
       });
-      
-      // Auto-save draft
-      dispatch(saveDraft());
-      
-      // Save draft to localStorage via API
-      if (currentForm?.formId) {
-        saveFormDraft(formValues);
-      }
     }
-  }, [formValues, isDirty, dispatch, formData, currentForm, saveFormDraft]);
+  }, [formValues, isDirty, dispatch, formData]);
 
   // Reset form when form structure changes
   useEffect(() => {
     if (currentForm) {
+      // Reset will set all form values at once
       reset(formData);
     }
   }, [currentForm, reset, formData]);
@@ -166,6 +157,4 @@ export const useFormValidation = () => {
     formValues,
     zodSchema,
   };
-};
-
-export default useFormValidation; 
+}; 

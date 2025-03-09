@@ -47,10 +47,10 @@ interface Submission {
 }
 
 /**
- * Submissions list component that displays a table of submissions
+ * Submissions list component that displays a table of form submissions
  * @returns The submissions list component
  */
-export default function SubmissionsList() {
+export function SubmissionsList() {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   

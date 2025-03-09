@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
-import formReducer from './slices/formSlice';
-import submissionsReducer from './slices/submissionsSlice';
+import { formReducer } from './slices/formSlice';
+import { submissionsReducer } from './slices/submissionsSlice';
 
 /**
  * Redux store configuration

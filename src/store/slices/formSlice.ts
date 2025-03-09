@@ -69,7 +69,6 @@ interface FormState {
   formData: Record<string, any>;
   loading: boolean;
   error: string | null;
-  isDraft: boolean;
   currentInsuranceType: string | null;
 }
 
@@ -82,7 +81,6 @@ const initialState: FormState = {
   formData: {},
   loading: false,
   error: null,
-  isDraft: false,
   currentInsuranceType: null,
 };
 
@@ -114,7 +112,6 @@ const formSlice = createSlice({
         ...state.formData,
         [action.payload.field]: action.payload.value,
       };
-      state.isDraft = true;
     },
     
     // Reorder fields within a section
@@ -195,7 +192,6 @@ const formSlice = createSlice({
     // Reset form
     resetForm: (state) => {
       state.formData = {};
-      state.isDraft = false;
     },
     
     // Set current insurance type
@@ -207,16 +203,6 @@ const formSlice = createSlice({
       if (form) {
         state.currentForm = form;
       }
-    },
-    
-    // Save draft
-    saveDraft: (state) => {
-      state.isDraft = true;
-    },
-    
-    // Clear draft
-    clearDraft: (state) => {
-      state.isDraft = false;
     },
   },
 });
@@ -231,8 +217,6 @@ export const {
   setError,
   resetForm,
   setCurrentInsuranceType,
-  saveDraft,
-  clearDraft,
 } = formSlice.actions;
 
-export default formSlice.reducer; 
+export const formReducer = formSlice.reducer; 

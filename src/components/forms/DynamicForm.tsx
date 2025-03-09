@@ -23,7 +23,7 @@ import { useFormData } from '../../hooks/useFormData';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import FormSection from './FormSection';
+import { FormSection } from './FormSection';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useFormValidation } from '../../hooks/useFormValidation';
 
@@ -36,7 +36,7 @@ interface DynamicFormProps {
  * @param formId - The ID of the form to render
  * @returns The dynamic form component
  */
-export default function DynamicForm({ formId }: DynamicFormProps) {
+export function DynamicForm({ formId }: DynamicFormProps) {
   const dispatch = useDispatch();
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -44,7 +44,7 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
   const [isReorderingEnabled, setIsReorderingEnabled] = useState(false);
 
   // Get form data from Redux and React Query
-  const { formData, isDraft } = useSelector((state: RootState) => state.form);
+  const { formData } = useSelector((state: RootState) => state.form);
   const { currentForm, isLoading, error, submitForm, isSubmitting, submitError } = useFormData(formId);
 
   // Get the validation schema from the hook
@@ -59,15 +59,13 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
 
   const { handleSubmit, reset, formState: { isValid } } = methods;
 
-  // Reset form when component unmounts
+  // Update form values when formData changes
   useEffect(() => {
-    return () => {
-      if (!isSubmitted) {
-        // Only save draft if not submitted
-        // Draft saving is handled in useFormValidation
-      }
-    };
-  }, [isSubmitted]);
+    if (formData && Object.keys(formData).length > 0) {
+      // Reset the form with the new formData
+      reset(formData);
+    }
+  }, [formData, reset]);
 
   // Handle form submission
   const onSubmit = (data: Record<string, any>) => {
@@ -203,12 +201,6 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
       <Typography variant="h4" gutterBottom>
         {currentForm.title}
       </Typography>
-
-      {isDraft && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          You have a draft in progress. Your changes are being saved automatically.
-        </Alert>
-      )}
 
       {/* Field reordering toggle */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>

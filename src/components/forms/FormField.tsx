@@ -33,7 +33,7 @@ interface FormFieldProps {
  * @param field - The field to render
  * @returns The form field component
  */
-export default function FormField({ field, formData }: FormFieldProps) {
+export function FormField({ field, formData }: FormFieldProps) {
   const [dynamicOptions, setDynamicOptions] = useState<any[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
 
