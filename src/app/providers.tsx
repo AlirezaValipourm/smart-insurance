@@ -27,13 +27,13 @@ interface ProvidersProps {
  */
 export function Providers({ children }: ProvidersProps) {
   return (
-    <ReduxProvider store={store}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ReduxProvider store={store}>
         <SettingsProvider>
           {children}
         </SettingsProvider>
-      </QueryClientProvider>
-    </ReduxProvider>
+      </ReduxProvider>
+    </QueryClientProvider>
   );
 }
 

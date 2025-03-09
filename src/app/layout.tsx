@@ -3,6 +3,9 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { Roboto } from 'next/font/google';
 import ThemeProvider from "@/smart-insurance/config/mui";
 import { Providers } from "./providers";
+import Header from "@/smart-insurance/components/layout/Header";
+import Footer from "@/smart-insurance/components/layout/Footer";
+import { Box } from '@mui/material';
 import "./globals.css";
 
 const roboto = Roboto({
@@ -37,7 +40,17 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <Providers>
             <ThemeProvider>
-              {children}
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                minHeight: '100vh'
+              }}>
+                <Header />
+                <Box component="main" sx={{ flexGrow: 1 }}>
+                  {children}
+                </Box>
+                <Footer />
+              </Box>
             </ThemeProvider>
           </Providers>
         </AppRouterCacheProvider>
