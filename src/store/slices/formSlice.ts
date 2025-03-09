@@ -117,6 +117,71 @@ const formSlice = createSlice({
       state.isDraft = true;
     },
     
+    // Reorder fields within a section
+    reorderFields: (state, action: PayloadAction<{ sectionId: string; startIndex: number; endIndex: number }>) => {
+      const { sectionId, startIndex, endIndex } = action.payload;
+      
+      // Find the section in the current form
+      if (!state.currentForm) return;
+      
+      // Helper function to find and update a section by ID
+      const updateSectionFields = (fields: FormField[]): FormField[] => {
+        for (let i = 0; i < fields.length; i++) {
+          const field = fields[i];
+          
+          // If this is the target section, reorder its fields
+          if (field.id === sectionId && field.fields) {
+            // Create a copy of the fields array
+            const updatedFields = Array.from(field.fields);
+            
+            // Remove the dragged item from the array
+            const [removed] = updatedFields.splice(startIndex, 1);
+            
+            // Insert the item at the new position
+            updatedFields.splice(endIndex, 0, removed);
+            
+            // Return the updated fields with the reordered section
+            const result = [...fields];
+            result[i] = {
+              ...field,
+              fields: updatedFields
+            };
+            return result;
+          }
+          
+          // If this field has nested fields, recursively search for the section
+          if (field.fields) {
+            const updatedNestedFields = updateSectionFields(field.fields);
+            
+            // If the nested fields were updated, return the updated fields
+            if (updatedNestedFields !== field.fields) {
+              const result = [...fields];
+              result[i] = {
+                ...field,
+                fields: updatedNestedFields
+              };
+              return result;
+            }
+          }
+        }
+        
+        // If the section wasn't found, return the original fields
+        return fields;
+      };
+      
+      // Update the current form with the reordered fields
+      state.currentForm = {
+        ...state.currentForm,
+        fields: updateSectionFields(state.currentForm.fields)
+      };
+      
+      // Also update the form in the forms array
+      const formIndex = state.forms.findIndex(form => form.formId === state.currentForm?.formId);
+      if (formIndex !== -1) {
+        state.forms[formIndex] = state.currentForm;
+      }
+    },
+    
     // Set loading state
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -161,6 +226,7 @@ export const {
   setCurrentForm,
   setFormData,
   updateFormField,
+  reorderFields,
   setLoading,
   setError,
   resetForm,

@@ -13,7 +13,9 @@ import {
   StepLabel,
   Alert,
   Snackbar,
-  Divider
+  Divider,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import { RootState } from '../../store';
 import { resetForm, FormStructure, FormField as FormFieldType } from '../../store/slices/formSlice';
@@ -22,6 +24,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import FormSection from './FormSection';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 interface DynamicFormProps {
   formId: string;
@@ -37,6 +40,7 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [isReorderingEnabled, setIsReorderingEnabled] = useState(false);
 
   // Get form data from Redux and React Query
   const { formData, isDraft } = useSelector((state: RootState) => state.form);
@@ -164,6 +168,11 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
     handleSubmit(onSubmit)();
   };
 
+  // Toggle field reordering
+  const toggleReordering = () => {
+    setIsReorderingEnabled(!isReorderingEnabled);
+  };
+
   if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -200,6 +209,31 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
         </Alert>
       )}
 
+      {/* Field reordering toggle */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={isReorderingEnabled}
+              onChange={toggleReordering}
+              color="primary"
+            />
+          }
+          label="Enable field reordering"
+        />
+      </Box>
+      
+      {/* Reordering mode indicator */}
+      {isReorderingEnabled && (
+        <Alert 
+          severity="info" 
+          sx={{ mb: 2 }}
+          icon={<DragIndicatorIcon />}
+        >
+          Reordering mode is active. Drag and drop fields to reorder them. Fields with nested content cannot be reordered.
+        </Alert>
+      )}
+
       {steps.length > 1 && (
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
           {steps.map((step) => (
@@ -222,6 +256,7 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
               <FormSection
                 field={step}
                 formData={formData}
+                isReorderingEnabled={isReorderingEnabled}
               />
             </Box>
           ))}

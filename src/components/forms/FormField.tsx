@@ -107,7 +107,7 @@ export default function FormField({ field, formData }: FormFieldProps) {
   }, []);
 
   // Combine static and dynamic options
-  const allOptions = useMemo(() => {
+  const availableOptions = useMemo(() => {
     return [...processOptions(field.options), ...dynamicOptions];
   }, [processOptions, field.options, dynamicOptions]);
 
@@ -116,246 +116,279 @@ export default function FormField({ field, formData }: FormFieldProps) {
     case 'text':
     case 'email':
     case 'tel':
-    case 'password':
-      // Add pattern validation if specified
-      const registerOptions: any = {};
-
+    case 'password': {
+      // Set up validation for pattern-based fields (like zip code, phone number)
+      const validationOptions: any = {};
+      
       if (field.validation?.pattern) {
-        registerOptions.validate = (value: string) => {
+        validationOptions.validate = (value: string) => {
           const pattern = new RegExp(field.validation!.pattern!);
-          return pattern.test(value) || `Invalid format. Expected pattern: ${field.validation!.pattern}`;
+          return pattern.test(value) || `Invalid format. Please check your input.`;
         };
       }
 
       return (
-        <TextField
-          id={field.id}
-          name={name}
-          inputRef={ref}
-          onChange={(e) => {
-            onChange(e);
-            if (field.validation?.pattern) {
-              const pattern = new RegExp(field.validation.pattern);
-              const isValid = pattern.test(e.target.value);
-              if (!isValid) {
-                // This will trigger validation
-                setValue(field.id, e.target.value, { shouldValidate: true });
-              }
-            }
-          }}
-          onBlur={onBlur}
-          label={field.label}
-          type={field.type}
-          fullWidth
-          error={!!error}
-          helperText={errorMessage}
-          required={field.required}
-        />
-      );
-
-    case 'number':
-      return (
-        <TextField
-          id={field.id}
-          name={name}
-          inputRef={ref}
-          onChange={onChange}
-          onBlur={onBlur}
-          label={field.label}
-          type="number"
-          fullWidth
-          error={!!error}
-          helperText={errorMessage}
-          required={field.required}
-          inputProps={{
-            min: field.validation?.min,
-            max: field.validation?.max
-          }}
-        />
-      );
-
-    case 'select':
-      return (
-        <FormControl fullWidth error={!!error}>
-          <InputLabel id={`${field.id}-label`}>{field.label}</InputLabel>
-          <Select
-            labelId={`${field.id}-label`}
+        <Box sx={{ width: '100%' }}>
+          <TextField
             id={field.id}
             name={name}
             inputRef={ref}
-            value={fieldValue || ''}
             onChange={(e) => {
-              // Call the original onChange from react-hook-form first
               onChange(e);
-
-              // Prevent unnecessary state updates if value hasn't changed
-              if (e.target.value !== fieldValue) {
-                // Use a timeout to prevent UI freezing during state updates
-                setTimeout(() => {
-                  handleChange(e.target.value);
-                }, 0);
+              // Validate pattern as user types
+              if (field.validation?.pattern) {
+                const pattern = new RegExp(field.validation.pattern);
+                const isValid = pattern.test(e.target.value);
+                if (!isValid) {
+                  setValue(field.id, e.target.value, { shouldValidate: true });
+                }
               }
             }}
             onBlur={onBlur}
             label={field.label}
-            disabled={isLoadingOptions}
+            type={field.type}
+            fullWidth
+            error={!!error}
+            helperText={errorMessage}
             required={field.required}
-          >
-            {isLoadingOptions ? (
-              <MenuItem value="" disabled>
-                Loading options...
-              </MenuItem>
-            ) : allOptions.length === 0 ? (
-              <MenuItem value="" disabled>
-                No options available
-              </MenuItem>
-            ) : [
-              <MenuItem key="empty" value="">
-                <em>Select an option</em>
-              </MenuItem>,
-              ...allOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+            placeholder={`Enter ${field.label.toLowerCase()}`}
+            sx={{ width: '100%' }}
+          />
+        </Box>
+      );
+    }
+
+    case 'number':
+      return (
+        <Box sx={{ width: '100%' }}>
+          <TextField
+            id={field.id}
+            name={name}
+            inputRef={ref}
+            onChange={onChange}
+            onBlur={onBlur}
+            label={field.label}
+            type="number"
+            fullWidth
+            error={!!error}
+            helperText={errorMessage}
+            required={field.required}
+            inputProps={{
+              min: field.validation?.min,
+              max: field.validation?.max
+            }}
+            placeholder={`Enter ${field.label.toLowerCase()}`}
+            sx={{ width: '100%' }}
+          />
+        </Box>
+      );
+
+    case 'select':
+      return (
+        <Box sx={{ width: '100%' }}>
+          <FormControl fullWidth error={!!error} sx={{ width: '100%' }}>
+            <InputLabel id={`${field.id}-label`}>{field.label}</InputLabel>
+            <Select
+              labelId={`${field.id}-label`}
+              id={field.id}
+              name={name}
+              inputRef={ref}
+              value={fieldValue || ''}
+              onChange={(e) => {
+                // Call the original onChange from react-hook-form first
+                onChange(e);
+                
+                // Only update if value actually changed
+                if (e.target.value !== fieldValue) {
+                  // Use a timeout to prevent UI freezing
+                  setTimeout(() => {
+                    setValue(field.id, e.target.value, { shouldValidate: true });
+                  }, 0);
+                }
+              }}
+              onBlur={onBlur}
+              label={field.label}
+              disabled={isLoadingOptions}
+              required={field.required}
+              sx={{ width: '100%' }}
+            >
+              {/* Show appropriate content based on loading state and available options */}
+              {isLoadingOptions ? (
+                <MenuItem value="" disabled>
+                  Loading options...
                 </MenuItem>
-              ))
-            ]}
-          </Select>
-          {error && <FormHelperText>{errorMessage}</FormHelperText>}
-        </FormControl>
+              ) : availableOptions.length === 0 ? (
+                <MenuItem value="" disabled>
+                  No options available
+                </MenuItem>
+              ) : [
+                <MenuItem key="empty" value="">
+                  <em>Select {field.label.toLowerCase()}</em>
+                </MenuItem>,
+                ...availableOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))
+              ]}
+            </Select>
+            {error && <FormHelperText>{errorMessage}</FormHelperText>}
+          </FormControl>
+        </Box>
       );
 
     case 'checkbox':
       if (Array.isArray(field.options) && field.options.length > 0) {
         // Multiple checkboxes
         return (
-          <FormControl required={field.required} error={!!error} component="fieldset">
-            <FormLabel component="legend">{field.label}</FormLabel>
-            <Box>
-              {allOptions.map((option) => {
+          <Box sx={{ width: '100%' }}>
+            <FormControl required={field.required} error={!!error} component="fieldset" sx={{ width: '100%' }}>
+              <FormLabel component="legend">{field.label}</FormLabel>
+              <Box sx={{ mt: 1, width: '100%' }}>
+                {availableOptions.map((option) => {
+                  const optionValue = typeof option === 'string' ? option : option.value;
+                  const optionLabel = typeof option === 'string' ? option : option.label;
+                  
+                  // For multiple checkboxes, we need to track an array of values
+                  const isSelected = Array.isArray(fieldValue) 
+                    ? fieldValue.includes(optionValue)
+                    : false;
+                  
+                  return (
+                    <FormControlLabel
+                      key={optionValue}
+                      control={
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={(e) => {
+                            let selectedValues: string[] = [];
+                            
+                            if (Array.isArray(fieldValue)) {
+                              selectedValues = [...fieldValue];
+                            }
+                            
+                            if (e.target.checked) {
+                              if (!selectedValues.includes(optionValue)) {
+                                selectedValues.push(optionValue);
+                              }
+                            } else {
+                              selectedValues = selectedValues.filter(v => v !== optionValue);
+                            }
+                            
+                            setValue(field.id, selectedValues, { shouldValidate: true });
+                          }}
+                        />
+                      }
+                      label={optionLabel}
+                      sx={{ display: 'block', mb: 1 }}
+                    />
+                  );
+                })}
+              </Box>
+              {error && (
+                <Typography color="error" variant="caption" sx={{ mt: 1 }}>
+                  {errorMessage}
+                </Typography>
+              )}
+            </FormControl>
+          </Box>
+        );
+      }
+      
+      // Single checkbox
+      return (
+        <Box sx={{ width: '100%' }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                name={name}
+                inputRef={ref}
+                checked={!!fieldValue}
+                onChange={(e) => {
+                  onChange(e);
+                  setValue(field.id, e.target.checked, { shouldValidate: true });
+                }}
+                onBlur={onBlur}
+              />
+            }
+            label={field.label}
+            sx={{ mb: 2, width: '100%' }}
+          />
+        </Box>
+      );
+      
+    case 'radio':
+      return (
+        <Box sx={{ width: '100%' }}>
+          <FormControl required={field.required} error={!!error} sx={{ mb: 2, width: '100%' }}>
+            <FormLabel>{field.label}</FormLabel>
+            <RadioGroup
+              name={name}
+              value={fieldValue || ''}
+              onChange={(e) => {
+                onChange(e);
+                setValue(field.id, e.target.value, { shouldValidate: true });
+              }}
+              sx={{ mt: 1, width: '100%' }}
+            >
+              {availableOptions.map((option) => {
                 const optionValue = typeof option === 'string' ? option : option.value;
                 const optionLabel = typeof option === 'string' ? option : option.label;
-
-                // For multiple checkboxes, we need to track an array of values
-                const isChecked = Array.isArray(fieldValue)
-                  ? fieldValue.includes(optionValue)
-                  : false;
-
+                
                 return (
                   <FormControlLabel
                     key={optionValue}
-                    control={
-                      <Checkbox
-                        checked={isChecked}
-                        onChange={(e) => {
-                          let newValue: string[] = [];
-
-                          if (Array.isArray(fieldValue)) {
-                            newValue = [...fieldValue];
-                          }
-
-                          if (e.target.checked) {
-                            if (!newValue.includes(optionValue)) {
-                              newValue.push(optionValue);
-                            }
-                          } else {
-                            newValue = newValue.filter(v => v !== optionValue);
-                          }
-
-                          handleChange(newValue);
-                        }}
-                      />
-                    }
+                    value={optionValue}
+                    control={<Radio inputRef={ref} onBlur={onBlur} />}
                     label={optionLabel}
+                    sx={{ display: 'block', mb: 1 }}
                   />
                 );
               })}
-            </Box>
-            {error && <Typography color="error" variant="caption">{errorMessage}</Typography>}
+            </RadioGroup>
+            {error && <FormHelperText>{errorMessage}</FormHelperText>}
           </FormControl>
-        );
-      }
-
-      // Single checkbox
-      return (
-        <FormControlLabel
-          control={
-            <Checkbox
-              name={name}
-              inputRef={ref}
-              checked={!!fieldValue}
-              onChange={(e) => {
-                onChange(e);
-                handleChange(e.target.checked);
-              }}
-              onBlur={onBlur}
-            />
-          }
-          label={field.label}
-        />
+        </Box>
       );
-
-    case 'radio':
-      return (
-        <FormControl required={field.required} error={!!error}>
-          <FormLabel>{field.label}</FormLabel>
-          <RadioGroup
-            name={name}
-            value={fieldValue || ''}
-            onChange={(e) => {
-              onChange(e);
-              handleChange(e.target.value);
-            }}
-          >
-            {allOptions.map((option) => {
-              const optionValue = typeof option === 'string' ? option : option.value;
-              const optionLabel = typeof option === 'string' ? option : option.label;
-
-              return (
-                <FormControlLabel
-                  key={optionValue}
-                  value={optionValue}
-                  control={<Radio inputRef={ref} onBlur={onBlur} />}
-                  label={optionLabel}
-                />
-              );
-            })}
-          </RadioGroup>
-          {error && <FormHelperText>{errorMessage}</FormHelperText>}
-        </FormControl>
-      );
-
+      
     case 'date':
       return (
-        <TextField
-          id={field.id}
-          name={name}
-          inputRef={ref}
-          onChange={onChange}
-          onBlur={onBlur}
-          label={field.label}
-          type="date"
-          fullWidth
-          error={!!error}
-          helperText={errorMessage}
-          required={field.required}
-          InputLabelProps={{ shrink: true }}
-        />
+        <Box sx={{ width: '100%' }}>
+          <TextField
+            id={field.id}
+            name={name}
+            inputRef={ref}
+            onChange={onChange}
+            onBlur={onBlur}
+            label={field.label}
+            type="date"
+            fullWidth
+            error={!!error}
+            helperText={errorMessage || 'YYYY-MM-DD'}
+            required={field.required}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mb: 2, width: '100%' }}
+          />
+        </Box>
       );
-
+      
     default:
       return (
-        <TextField
-          id={field.id}
-          name={name}
-          inputRef={ref}
-          onChange={onChange}
-          onBlur={onBlur}
-          label={field.label}
-          fullWidth
-          error={!!error}
-          helperText={errorMessage}
-          required={field.required}
-        />
+        <Box sx={{ width: '100%' }}>
+          <TextField
+            id={field.id}
+            name={name}
+            inputRef={ref}
+            onChange={onChange}
+            onBlur={onBlur}
+            label={field.label}
+            fullWidth
+            error={!!error}
+            helperText={errorMessage}
+            required={field.required}
+            sx={{ mb: 2, width: '100%' }}
+          />
+        </Box>
       );
   }
 } 
