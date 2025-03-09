@@ -1,14 +1,13 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
+import { z } from 'zod';
 import { RootState } from '../store';
-import { FormField, updateFormField, saveDraft } from '../store/slices/formSlice';
+import { FormField, saveDraft, updateFormField } from '../store/slices/formSlice';
 import { useFormData } from './useFormData';
-import FormSection from '../components/forms/FormSection';
 
 /**
  * Custom hook for form validation using React Hook Form and Zod
@@ -165,6 +164,7 @@ export const useFormValidation = () => {
     watch,
     trigger,
     formValues,
+    zodSchema,
   };
 };
 

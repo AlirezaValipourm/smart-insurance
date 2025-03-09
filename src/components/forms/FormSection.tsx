@@ -83,7 +83,6 @@ export default function FormSection({ field, formData, isReorderingEnabled = fal
 
   /**
    * Handle special dependencies between fields in different sections
-   * For example, state field depends on country field which might be in a different group
    */
   const enrichedFormData = { ...formData };
   

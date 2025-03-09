@@ -25,6 +25,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import FormSection from './FormSection';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 interface DynamicFormProps {
   formId: string;
@@ -46,12 +47,12 @@ export default function DynamicForm({ formId }: DynamicFormProps) {
   const { formData, isDraft } = useSelector((state: RootState) => state.form);
   const { currentForm, isLoading, error, submitForm, isSubmitting, submitError } = useFormData(formId);
 
-  // Create a simple form schema
-  const formSchema = z.object({}).catchall(z.any());
-
-  // Initialize React Hook Form
+  // Get the validation schema from the hook
+  const { zodSchema } = useFormValidation();
+  
+  // Use the dynamic schema from the validation hook
   const methods = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(zodSchema),
     defaultValues: formData,
     mode: 'onChange',
   });
