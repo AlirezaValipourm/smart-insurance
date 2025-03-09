@@ -345,7 +345,7 @@ export function FormField({ field, formData }: FormFieldProps) {
             type="date"
             fullWidth
             error={!!error}
-            helperText={errorMessage || 'YYYY-MM-DD'}
+            helperText={errorMessage}
             required={field.required}
             InputLabelProps={{ shrink: true }}
             sx={{ mb: 2, width: '100%' }}
