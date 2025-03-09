@@ -43,7 +43,6 @@ export const useFormData = (formId?: string) => {
         dispatch(setLoading(false));
       }
     },
-    enabled: true, // Always fetch forms
   });
 
   // Query for fetching a specific form
@@ -86,7 +85,6 @@ export const useFormData = (formId?: string) => {
       // Reset form after successful submission
       dispatch(resetForm());
       
-      // Invalidate and refetch submissions query to update the list
       queryClient.invalidateQueries({ queryKey: ['submissions'] });
     },
   });
@@ -103,7 +101,6 @@ export const useFormData = (formId?: string) => {
       return response;
     } catch (error) {
       console.error(`Error fetching options from ${endpoint}:`, error);
-      // Return empty array instead of throwing to prevent UI issues
       return [];
     }
   }, []);

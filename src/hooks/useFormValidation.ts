@@ -15,7 +15,6 @@ import { FormField, updateFormField } from '../store/slices/formSlice';
 export const useFormValidation = () => {
   const dispatch = useDispatch();
   
-  // Get form structure and data from Redux
   const { currentForm, formData } = useSelector((state: RootState) => state.form);
 
   // Build Zod schema dynamically based on form structure
@@ -24,7 +23,6 @@ export const useFormValidation = () => {
 
     const schemaFields: Record<string, any> = {};
 
-    // Define the processField function first
     function processField(field: FormField) {
       // Skip fields with visibility conditions not met
       if (field.visibility) {
@@ -40,17 +38,14 @@ export const useFormValidation = () => {
       if (field.type === 'text' || field.type === 'email' || field.type === 'tel') {
         fieldSchema = z.string();
         
-        // Add email validation
         if (field.type === 'email') {
           fieldSchema = fieldSchema.email('Invalid email address');
         }
         
-        // Add phone validation
         if (field.type === 'tel') {
           fieldSchema = fieldSchema.regex(/^\d{10}$/, 'Phone number must be 10 digits');
         }
         
-        // Add pattern validation if specified
         if (field.validation?.pattern) {
           fieldSchema = fieldSchema.regex(
             new RegExp(field.validation.pattern),
@@ -60,7 +55,6 @@ export const useFormValidation = () => {
       } else if (field.type === 'number') {
         fieldSchema = z.coerce.number();
         
-        // Add min/max validation if specified
         if (field.validation?.min !== undefined) {
           fieldSchema = fieldSchema.min(field.validation.min, `Value must be at least ${field.validation.min}`);
         }
@@ -83,15 +77,12 @@ export const useFormValidation = () => {
         }
       }
       
-      // Add the field schema to schemaFields
       schemaFields[field.id] = field.required ? fieldSchema : fieldSchema.optional();
     }
 
-    // Process all fields in the form
     const processFields = (fields: FormField[]) => {
       fields.forEach(field => {
         if (field.type === 'group' && field.fields) {
-          // Process nested fields in groups
           field.fields.forEach(nestedField => {
             processField(nestedField);
           });
@@ -107,7 +98,6 @@ export const useFormValidation = () => {
 
   const zodSchema = buildZodSchema();
 
-  // Initialize React Hook Form
   const {
     register,
     handleSubmit,
@@ -122,12 +112,10 @@ export const useFormValidation = () => {
     mode: 'onChange',
   });
 
-  // Watch for form changes to update Redux store
   const formValues = watch();
   
   useEffect(() => {
     if (isDirty && Object.keys(formValues).length > 0) {
-      // Update form data in Redux store
       Object.entries(formValues).forEach(([field, value]) => {
         if (formData[field] !== value) {
           dispatch(updateFormField({ field, value }));
@@ -139,7 +127,6 @@ export const useFormValidation = () => {
   // Reset form when form structure changes
   useEffect(() => {
     if (currentForm) {
-      // Reset will set all form values at once
       reset(formData);
     }
   }, [currentForm, reset, formData]);

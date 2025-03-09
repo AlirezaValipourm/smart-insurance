@@ -21,11 +21,6 @@ interface FormSectionProps {
 /**
  * Insurance Form Section Component
  * 
- * This component renders a group of related form fields as a section.
- * It handles visibility conditions for fields and special dependencies between fields.
- * It also supports nested sections (groups within groups).
- * Now with drag-and-drop reordering capability using HTML5 drag and drop.
- * 
  * @param field - The field group configuration object
  * @param formData - The current form data
  * @param isReorderingEnabled - Whether field reordering is enabled
@@ -58,7 +53,6 @@ export function FormSection({ field, formData, isReorderingEnabled = false }: Fo
 
   /**
    * Filter fields based on visibility conditions
-   * For example, only show smoking frequency if user is a smoker
    */
   const visibleFields = useMemo(() => {
     return orderedFields.filter((nestedField) => {
@@ -88,10 +82,8 @@ export function FormSection({ field, formData, isReorderingEnabled = false }: Fo
   
   // Special case for home address section
   if (field.id === 'home_address') {
-    // Get all current form values
     const allFormValues = getValues();
     
-    // If country is selected elsewhere in the form, make it available to this section
     if (allFormValues.country) {
       enrichedFormData.country = allFormValues.country;
     }
@@ -128,33 +120,26 @@ export function FormSection({ field, formData, isReorderingEnabled = false }: Fo
     
     if (draggedIndex === null) return;
     
-    // Don't do anything if the position didn't change
     if (draggedIndex === dropIndex) {
       setDraggedIndex(null);
       setDragOverIndex(null);
       return;
     }
 
-    // Create a copy of the fields array
     const newOrderedFields = Array.from(orderedFields);
     
-    // Remove the dragged item from the array
     const [removed] = newOrderedFields.splice(draggedIndex, 1);
     
-    // Insert the item at the new position
     newOrderedFields.splice(dropIndex, 0, removed);
     
-    // Update the local state
     setOrderedFields(newOrderedFields);
     
-    // Dispatch action to update the global state
     dispatch(reorderFields({
       sectionId: field.id,
       startIndex: draggedIndex,
       endIndex: dropIndex
     }));
     
-    // Reset drag state
     setDraggedIndex(null);
     setDragOverIndex(null);
   }, [draggedIndex, orderedFields, dispatch, field.id]);

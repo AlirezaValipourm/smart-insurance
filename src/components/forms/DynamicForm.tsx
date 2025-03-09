@@ -1,31 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { zodResolver } from '@hookform/resolvers/zod';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
-  Typography,
-  Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  Alert,
-  Snackbar,
   Divider,
   FormControlLabel,
-  Switch
+  Paper,
+  Snackbar,
+  Step,
+  StepLabel,
+  Stepper,
+  Switch,
+  Typography
 } from '@mui/material';
-import { RootState } from '../../store';
-import { resetForm, FormStructure, FormField as FormFieldType } from '../../store/slices/formSlice';
+import { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
 import { useFormData } from '../../hooks/useFormData';
-import { useForm, FormProvider } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { FormSection } from './FormSection';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useFormValidation } from '../../hooks/useFormValidation';
+import { RootState } from '../../store';
+import { FormField as FormFieldType, FormStructure, resetForm } from '../../store/slices/formSlice';
+import { FormSection } from './FormSection';
 
 interface DynamicFormProps {
   formId: string;
@@ -62,17 +61,14 @@ export function DynamicForm({ formId }: DynamicFormProps) {
   // Update form values when formData changes
   useEffect(() => {
     if (formData && Object.keys(formData).length > 0) {
-      // Reset the form with the new formData
       reset(formData);
     }
   }, [formData, reset]);
 
   // Handle form submission
   const onSubmit = (data: Record<string, any>) => {
-    // Process form data to handle nested fields and checkbox groups
     const processedData = processFormData(data, currentForm || null);
 
-    // Add form ID to form data
     const submissionData = {
       ...processedData,
       formId,
@@ -96,10 +92,8 @@ export function DynamicForm({ formId }: DynamicFormProps) {
     try {
       const result: Record<string, any> = { ...data };
 
-      // Process each field
       const processFields = (fields: FormFieldType[]) => {
         fields.forEach(field => {
-          // Handle group fields
           if (field.type === 'group' && field.fields) {
             // Create an object for the group if it doesn't exist
             if (!result[field.id]) {
@@ -108,19 +102,14 @@ export function DynamicForm({ formId }: DynamicFormProps) {
 
             // Process nested fields
             field.fields.forEach(nestedField => {
-              // If the nested field has a value in the form data, add it to the group
               if (data[nestedField.id] !== undefined) {
                 result[field.id][nestedField.id] = data[nestedField.id];
-
-                // Remove the flat field from the result to avoid duplication
                 delete result[nestedField.id];
               }
             });
           }
 
-          // Handle checkbox fields with multiple selections
           if (field.type === 'checkbox' && Array.isArray(field.options) && field.options.length > 0) {
-            // Ensure checkbox values are always arrays
             if (result[field.id] && !Array.isArray(result[field.id])) {
               result[field.id] = [result[field.id]];
             }
@@ -132,23 +121,19 @@ export function DynamicForm({ formId }: DynamicFormProps) {
       return result;
     } catch (error) {
       console.error('Error processing form data:', error);
-      // Return original data if processing fails
       return data;
     }
   };
 
-  // Group fields into steps
   const fieldGroups = currentForm?.fields.filter(field => field.type === 'group') || [];
   const standaloneFields = currentForm?.fields.filter(field => field.type !== 'group') || [];
 
-  // Combine standalone fields into a single group if there are any
   const steps = standaloneFields.length > 0
     ? [{ id: 'general', label: 'General Information', type: 'group', fields: standaloneFields }, ...fieldGroups]
     : fieldGroups;
 
   // Handle next step
   const handleNext = async () => {
-    // Only go to next step, never submit the form here
     setActiveStep((prevStep) => prevStep + 1);
   };
 
@@ -202,7 +187,6 @@ export function DynamicForm({ formId }: DynamicFormProps) {
         {currentForm.title}
       </Typography>
 
-      {/* Field reordering toggle */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <FormControlLabel
           control={
@@ -216,7 +200,6 @@ export function DynamicForm({ formId }: DynamicFormProps) {
         />
       </Box>
       
-      {/* Reordering mode indicator */}
       {isReorderingEnabled && (
         <Alert 
           severity="info" 

@@ -6,7 +6,6 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { store } from '../store';
 import { SettingsProvider } from '../contexts/SettingsContext';
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -1,38 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useSettings } from '@/smart-insurance/hooks/useSettings';
+import {
+  Check as CheckIcon,
+  Brightness4 as DarkModeIcon,
+  Brightness7 as LightModeIcon,
+  Settings as SettingsIcon
+} from '@mui/icons-material';
 import {
   AppBar,
   Box,
-  Toolbar,
-  Typography,
-  IconButton,
-  useMediaQuery,
-  useTheme,
   Container,
-  Tooltip,
-  Menu,
-  MenuItem,
+  Divider,
+  IconButton,
   ListItemIcon,
   ListItemText,
-  Divider
+  Menu,
+  MenuItem,
+  Toolbar,
+  Tooltip,
+  Typography,
+  useTheme
 } from '@mui/material';
-import {
-  Brightness4 as DarkModeIcon,
-  Brightness7 as LightModeIcon,
-  Menu as MenuIcon,
-  Palette as PaletteIcon,
-  Settings as SettingsIcon,
-  Check as CheckIcon
-} from '@mui/icons-material';
-import { useSettings } from '@/smart-insurance/hooks/useSettings';
+import { useState } from 'react';
 
 /**
  * Main application header with theme selection
  */
 export function Header() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { 
     themeMode, 
     onToggleMode, 
@@ -42,10 +38,7 @@ export function Header() {
     colorOption
   } = useSettings();
   
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [themeMenu, setThemeMenu] = useState<null | HTMLElement>(null);
-
-  const isDarkMode = themeMode === 'dark';
   
   const handleThemeMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setThemeMenu(event.currentTarget);
@@ -99,10 +92,6 @@ export function Header() {
               anchorEl={themeMenu}
               open={Boolean(themeMenu)}
               onClose={handleThemeMenuClose}
-              PaperProps={{
-                elevation: 3,
-                sx: { width: 220, maxWidth: '100%' }
-              }}
             >
               <Typography variant="subtitle1" sx={{ px: 2, py: 1 }}>
                 Theme Settings

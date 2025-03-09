@@ -40,12 +40,6 @@ import {
 } from '../../store/slices/submissionsSlice';
 import { useSubmissionsData } from '../../hooks/useSubmissionsData';
 
-// Define the submission type
-interface Submission {
-  id: string;
-  [key: string]: string | number;
-}
-
 /**
  * Submissions list component that displays a table of form submissions
  * @returns The submissions list component

@@ -7,7 +7,6 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 // ----------------------------------------------------------------------
 
 type Query = 'up' | 'down' | 'between' | 'only';
-// type Key = Breakpoint | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 type Key = Breakpoint | number;
 type Start = Breakpoint | number;
 type End = Breakpoint | number;

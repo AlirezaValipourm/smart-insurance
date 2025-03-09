@@ -7,7 +7,6 @@ import { SubmissionItem } from '../store/slices/submissionsSlice';
  * Using a relative URL to our Next.js API proxy to avoid CORS issues
  */
 const BASE_URL = '/api/external';
-// const BASE_URL = 'https://assignment.devotel.io/';
 
 /**
  * Axios instance with base configuration
@@ -19,14 +18,6 @@ export const apiClient = axios.create({
   },
 });
 
-/**
- * API service for insurance forms
- * Implements the endpoints specified in the documentation:
- * - GET /api/insurance/forms: Fetches the dynamic form structure
- * - POST /api/insurance/forms/submit: Submits the completed form
- * - GET /api/insurance/forms/submissions: Retrieves the list of submitted applications
- * - GET /api/insurance/fields/{fieldId}/options: Fetches options for dynamic fields
- */
 export const insuranceApi = {
   /**
    * Fetch form structure from API
@@ -122,9 +113,7 @@ export const insuranceApi = {
         return [];
       }
 
-      // Special handling for getStates endpoint
       if (endpoint === '/api/getStates') {
-        // Use our internal API endpoint
         console.log(`Fetching states for country: ${dependentValue}`);
         const response = await axios.get('/api/external/getStates', {
           params: { country: dependentValue }
@@ -136,11 +125,8 @@ export const insuranceApi = {
         return [];
       }
 
-      // For other endpoints, use the external API proxy
-      // Clean the endpoint to ensure proper formatting
       const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
 
-      // Try to fetch from the actual API
       try {
         console.log(`Fetching options from ${cleanEndpoint} with value: ${dependentValue}`);
         const response = await apiClient.get(cleanEndpoint, {
@@ -153,10 +139,8 @@ export const insuranceApi = {
         }
       } catch (apiError) {
         console.warn(`API call failed, falling back to mock data: ${apiError}`);
-        // Continue to mock data if API call fails
       }
 
-      // Fallback to mock data for testing purposes
       console.warn(`No data available for endpoint: ${endpoint}`);
       return [];
     } catch (error) {

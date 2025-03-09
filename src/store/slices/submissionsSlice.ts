@@ -49,13 +49,11 @@ const submissionsSlice = createSlice({
   name: 'submissions',
   initialState,
   reducers: {
-    // Set submissions data
     setSubmissions: (state, action: PayloadAction<{ data: SubmissionItem[]; columns: string[]; totalItems: number }>) => {
       state.data = action.payload.data;
       state.columns = action.payload.columns;
       state.totalItems = action.payload.totalItems;
       
-      // If visibleColumns is empty, set it to all columns
       if (state.visibleColumns.length === 0) {
         state.visibleColumns = action.payload.columns;
       }
@@ -95,7 +93,7 @@ const submissionsSlice = createSlice({
     // Set search term
     setSearchTerm: (state, action: PayloadAction<string>) => {
       state.searchTerm = action.payload;
-      state.currentPage = 1; // Reset to first page when searching
+      state.currentPage = 1;
     },
     
     // Set current page
@@ -106,7 +104,7 @@ const submissionsSlice = createSlice({
     // Set items per page
     setItemsPerPage: (state, action: PayloadAction<number>) => {
       state.itemsPerPage = action.payload;
-      state.currentPage = 1; // Reset to first page when changing items per page
+      state.currentPage = 1;
     },
   },
 });
