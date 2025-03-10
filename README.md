@@ -9,7 +9,6 @@ A dynamic insurance application portal built with Next.js, React, and Material U
 - **Nested Sections**: Support for complex form structures with nested sections
 - **Dynamic Field Options**: Some fields fetch options from an API based on other field values
 - **Form Validation**: Comprehensive validation using React Hook Form and Zod
-- **Autosave Drafts**: Forms are automatically saved as drafts
 - **Customizable List View**: Users can select which columns to display in the applications list
 - **Sorting and Filtering**: Applications can be sorted and filtered
 - **Dark Mode**: Toggle between light and dark themes
@@ -93,11 +92,8 @@ src/
 - Conditional fields depend on the values of other fields
 - The API supports pagination, sorting, and filtering for submissions
 - The API returns both data and metadata (columns, total items) for submissions
-
+- The app uses Next.js backend as Proxy to prevent CORS errors
 ## Deployment
 
 The application is deployed on Vercel at [https://smart-insurance.vercel.app](https://smart-insurance.vercel.app)
 
-## License
-
-MIT
