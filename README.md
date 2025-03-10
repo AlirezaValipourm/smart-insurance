@@ -93,7 +93,3 @@ src/
 - The API supports pagination, sorting, and filtering for submissions
 - The API returns both data and metadata (columns, total items) for submissions
 - The app uses Next.js backend as Proxy to prevent CORS errors
-## Deployment
-
-The application is deployed on Vercel at [https://smart-insurance.vercel.app](https://smart-insurance.vercel.app)
-
